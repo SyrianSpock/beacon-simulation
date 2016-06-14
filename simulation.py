@@ -2,9 +2,18 @@ from math import *
 import numpy as np
 import matplotlib.pyplot as plt
 
+BEACON_DISTANCE_NOISE_STDDEV = 0.03 # 3cm
 SIMULATION_UPDATE_RATE = 100 # hz
 SIMULATION_DURATION = 7 # second
 SIMULATION_PLOT_ONCE_IN_X_ITERATION = 10
+
+BEACON_1_POSITION = np.array([-1.5, 0])
+BEACON_2_POSITION = np.array([1.5, 1])
+BEACON_3_POSITION = np.array([1.5, -1])
+
+def distance_from_beacon(pos, beacon_pos):
+    return np.linalg.norm(pos - beacon_pos) \
+            + np.random.normal(0, BEACON_DISTANCE_NOISE_STDDEV)
 
 def lemniscate_of_bernoulli(t):
     scale = 2.5 / (3 - cos(2*t))
@@ -36,6 +45,11 @@ def figure_clear_and_update(fig, traj_x, traj_y):
 def plot_position(fig, pos, color):
     fig.plot(pos[0], pos[1], color=color, marker='o', linewidth=1.0)
 
+def plot_beacon_distance_circle(fig, beacon_pos, beacon_dist):
+    circle = plt.Circle(beacon_pos, beacon_dist, fill=False)
+    fig.add_artist(circle)
+    plot_position(fig, beacon_pos, 'black')
+
 
 def main():
     plt.figure()
@@ -50,6 +64,16 @@ def main():
 
         if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
             plot_position(fig, robot_position, 'black')
+
+        # Get beacon distances
+        d1 = distance_from_beacon(robot_position, BEACON_1_POSITION)
+        d2 = distance_from_beacon(robot_position, BEACON_2_POSITION)
+        d3 = distance_from_beacon(robot_position, BEACON_3_POSITION)
+
+        if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
+            plot_beacon_distance_circle(fig, BEACON_1_POSITION, d1)
+            plot_beacon_distance_circle(fig, BEACON_2_POSITION, d2)
+            plot_beacon_distance_circle(fig, BEACON_3_POSITION, d3)
 
         if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
             figure_clear_and_update(fig, traj_x, traj_y)
