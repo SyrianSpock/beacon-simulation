@@ -2,14 +2,18 @@ from math import *
 import numpy as np
 import matplotlib.pyplot as plt
 
+from beacon_ekf import BeaconEKF
+
 BEACON_DISTANCE_NOISE_STDDEV = 0.03 # 3cm
 SIMULATION_UPDATE_RATE = 100 # hz
 SIMULATION_DURATION = 7 # second
-SIMULATION_PLOT_ONCE_IN_X_ITERATION = 10
+SIMULATION_PLOT_ONCE_IN_X_ITERATION = 1
 
-BEACON_1_POSITION = np.array([-1.5, 0])
-BEACON_2_POSITION = np.array([1.5, 1])
-BEACON_3_POSITION = np.array([1.5, -1])
+BEACON_1_POSITION = np.array([-1.5, 0, 0.35])
+BEACON_2_POSITION = np.array([1.5, 1, 0.35])
+BEACON_3_POSITION = np.array([1.5, -1, 0.35])
+
+MEASUREMENT_COVARIANCE_MATRIX = (BEACON_DISTANCE_NOISE_STDDEV ** 2) * np.eye(3)
 
 def distance_from_beacon(pos, beacon_pos):
     return np.linalg.norm(pos - beacon_pos) \
@@ -50,6 +54,16 @@ def plot_beacon_distance_circle(fig, beacon_pos, beacon_dist):
     fig.add_artist(circle)
     plot_position(fig, beacon_pos, 'black')
 
+def plot_results(traj_x, traj_y, ekf_x, ekf_y):
+    plt.figure()
+
+    plt.plot(traj_x, traj_y, color='red')
+    plt.plot(ekf_x, ekf_y, color='blue')
+    plt.xlim(-1.5, 1.5)
+    plt.ylim(-1.0, 1.0)
+
+    plt.show()
+
 
 def main():
     plt.figure()
@@ -57,10 +71,16 @@ def main():
 
     plot_flag = 0
     traj_x, traj_y = generate_full_trajectory()
+    ekf_x, ekf_y = [], []
+
+    kalman = BeaconEKF(BEACON_1_POSITION, BEACON_2_POSITION, BEACON_3_POSITION,
+                       1 / SIMULATION_UPDATE_RATE)
+    kalman.reset(np.array([1.25, 0, 0.35, 0, 0, 0]).reshape([6,1]),
+                 np.square(np.diag([0.1, 0.1, 0.1, 1e1, 1e1, 1e1])))
 
     for i in range(int(SIMULATION_DURATION * SIMULATION_UPDATE_RATE)):
         # Get real position and plot it
-        robot_position = np.array([traj_x[i], traj_y[i]])
+        robot_position = np.array([traj_x[i], traj_y[i], 0.35])
 
         if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
             plot_position(fig, robot_position, 'black')
@@ -70,17 +90,23 @@ def main():
         d2 = distance_from_beacon(robot_position, BEACON_2_POSITION)
         d3 = distance_from_beacon(robot_position, BEACON_3_POSITION)
 
-        if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
-            plot_beacon_distance_circle(fig, BEACON_1_POSITION, d1)
-            plot_beacon_distance_circle(fig, BEACON_2_POSITION, d2)
-            plot_beacon_distance_circle(fig, BEACON_3_POSITION, d3)
+        # Update Kalman filter
+        kalman.predict(0)
+        kalman.measure(np.array([d1, d2, d3]).reshape([3,1]), MEASUREMENT_COVARIANCE_MATRIX)
+        ekf_x.append(kalman.x[0])
+        ekf_y.append(kalman.x[1])
 
+        if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
+            plot_position(fig, kalman.x[0:2], 'green')
+
+        # Update plot
         if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
             figure_clear_and_update(fig, traj_x, traj_y)
             plot_flag = 0
         else:
             plot_flag += 1
 
+    plot_results(traj_x, traj_y, ekf_x, ekf_y)
 
 if __name__ == '__main__':
     main()
