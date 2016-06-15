@@ -7,7 +7,6 @@ from beacon_ekf import BeaconEKF
 BEACON_DISTANCE_NOISE_STDDEV = 0.03 # 3cm
 SIMULATION_UPDATE_RATE = 100 # hz
 SIMULATION_DURATION = 7 # second
-SIMULATION_PLOT_ONCE_IN_X_ITERATION = 1
 
 BEACON_1_POSITION = np.array([-1.5, 0, 0.35])
 BEACON_2_POSITION = np.array([1.5, 1, 0.35])
@@ -94,15 +93,14 @@ def main():
 
     kalman = BeaconEKF(BEACON_1_POSITION, BEACON_2_POSITION, BEACON_3_POSITION,
                        1 / SIMULATION_UPDATE_RATE)
-    kalman.reset(np.array([1.25, 0, 0.35, 0, 0, 0]).reshape([6,1]),
+    kalman.reset(np.array([0, 0, 0, 0, 0, 0]).reshape([6,1]),
                  np.square(np.diag([1, 1, 1, 1e1, 1e1, 1e1])))
 
     for i in range(int(SIMULATION_DURATION * SIMULATION_UPDATE_RATE)):
         # Get real position and plot it
         robot_position = np.array([traj_x[i], traj_y[i], 0.35])
 
-        if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
-            plot_position(fig, robot_position, 'black')
+        plot_position(fig, robot_position, 'black')
 
         # Get beacon distances
         d1 = distance_from_beacon(robot_position, BEACON_1_POSITION)
@@ -117,15 +115,10 @@ def main():
 
         print('pos {} | kf {}'.format(robot_position, kalman.x.T))
 
-        if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
-            plot_position(fig, kalman.x[0:2], 'green')
+        plot_position(fig, kalman.x[0:2], 'green')
 
         # Update plot
-        if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
-            figure_clear_and_update(fig, traj_x, traj_y)
-            plot_flag = 0
-        else:
-            plot_flag += 1
+        figure_clear_and_update(fig, traj_x, traj_y)
 
     plot_results(traj_x, traj_y, ekf_x, ekf_y)
     plot_errors(traj_x, traj_y, ekf_x, ekf_y)
