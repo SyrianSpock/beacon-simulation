@@ -36,7 +36,7 @@ class BeaconEKF(EKF):
                                  np.concatenate([np.zeros_like(F_cont), F_cont], axis=1)], axis=0)
         B = np.eye(len(A)) + A + 0.5 * np.dot(A, A) # approx expm(A)
 
-        Q = np.dot(B[6:,6:].T, B[:6,6:])
+        Q = np.dot(B[self.n:,self.n:].T, B[:self.n,self.n:])
 
         return Q
 
@@ -68,7 +68,7 @@ class BeaconEKF(EKF):
         return z
 
     def H(self, x):
-        H = np.zeros([3, 6])
+        H = np.zeros([3, self.n])
 
         H[0][0] = (x[0] - self.b1[0]) / np.linalg.norm(self.b1 - x[0:3])
         H[0][1] = (x[1] - self.b1[1]) / np.linalg.norm(self.b1 - x[0:3])

@@ -115,6 +115,8 @@ def main():
         ekf_x.append(kalman.x[0])
         ekf_y.append(kalman.x[1])
 
+        print('pos {} | kf {}'.format(robot_position, kalman.x.T))
+
         if plot_flag == SIMULATION_PLOT_ONCE_IN_X_ITERATION:
             plot_position(fig, kalman.x[0:2], 'green')
 
@@ -127,6 +129,7 @@ def main():
 
     plot_results(traj_x, traj_y, ekf_x, ekf_y)
     plot_errors(traj_x, traj_y, ekf_x, ekf_y)
+    print('Final sqrt(diag(P))', np.sqrt(np.diag(kalman.P)))
 
 if __name__ == '__main__':
     main()

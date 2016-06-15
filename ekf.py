@@ -3,6 +3,7 @@ import numpy as np
 
 class EKF(object):
     def __init__(self, n, f, F, h, H):
+        self.n = n
         self.x = np.zeros([n, 1])
         self.P = np.eye(n)
         self.f = f
