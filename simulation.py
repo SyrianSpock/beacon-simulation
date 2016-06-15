@@ -38,7 +38,8 @@ def generate_full_trajectory():
     return traj_x, traj_y
 
 def figure_clear_and_update(fig, traj_x, traj_y):
-    fig.plot(traj_x, traj_y, color='red')
+    traj_, = fig.plot(traj_x, traj_y, color='red', label='trajectory')
+    plt.legend([traj_], ['Trajectory'])
     plt.xlim(-1.5, 1.5)
     plt.ylim(-1.0, 1.0)
 
@@ -64,6 +65,21 @@ def plot_results(traj_x, traj_y, ekf_x, ekf_y):
 
     plt.show()
 
+def plot_errors(traj_x, traj_y, ekf_x, ekf_y):
+    err_x = np.array(ekf_x).reshape([700,]) - np.array(traj_x)
+    err_y = np.array(ekf_y).reshape([700,]) - np.array(traj_y)
+
+    plt.figure()
+    plt.plot(err_x, color='red')
+    plt.plot(err_y, color='blue')
+
+    plt.figure()
+    fig_x = plt.subplot(1, 2, 1)
+    fig_x.hist(err_x, color='red')
+    fig_y = plt.subplot(1, 2, 2)
+    fig_y.hist(err_y, color='blue')
+
+    plt.show()
 
 def main():
     plt.figure()
@@ -107,7 +123,7 @@ def main():
             plot_flag += 1
 
     plot_results(traj_x, traj_y, ekf_x, ekf_y)
+    plot_errors(traj_x, traj_y, ekf_x, ekf_y)
 
 if __name__ == '__main__':
     main()
-
