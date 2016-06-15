@@ -79,6 +79,9 @@ def plot_errors(traj_x, traj_y, ekf_x, ekf_y):
     fig_y = plt.subplot(1, 2, 2)
     fig_y.hist(err_y, color='blue')
 
+    fig_x.set_title('mean {:.6f}, dev {:.6f}'.format(np.mean(err_x), np.std(err_x)))
+    fig_y.set_title('mean {:.6f}, dev {:.6f}'.format(np.mean(err_y), np.std(err_y)))
+
     plt.show()
 
 def main():
@@ -92,7 +95,7 @@ def main():
     kalman = BeaconEKF(BEACON_1_POSITION, BEACON_2_POSITION, BEACON_3_POSITION,
                        1 / SIMULATION_UPDATE_RATE)
     kalman.reset(np.array([1.25, 0, 0.35, 0, 0, 0]).reshape([6,1]),
-                 np.square(np.diag([0.1, 0.1, 0.1, 1e1, 1e1, 1e1])))
+                 np.square(np.diag([1, 1, 1, 1e1, 1e1, 1e1])))
 
     for i in range(int(SIMULATION_DURATION * SIMULATION_UPDATE_RATE)):
         # Get real position and plot it
