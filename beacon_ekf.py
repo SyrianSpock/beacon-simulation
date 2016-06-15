@@ -11,34 +11,19 @@ class BeaconEKF(EKF):
         self.b3 = b3
         self.dt = dt
 
-        # self.Q = self.get_Q(dt)
-        self.Q = PROCESS_NOISE_VARIANCE * np.eye(6)
+        # self.Q = PROCESS_NOISE_VARIANCE * np.eye(6)
+        w_psd = PROCESS_NOISE_VARIANCE
+        self.Q = np.array([
+                    [0, 0, 0, -0.5*dt**2*w_psd, 0, 0],
+                    [0, 0, 0, 0, -0.5*dt**2*w_psd, 0],
+                    [0, 0, 0, 0, 0, -0.5*dt**2*w_psd],
+                    [0, 0, 0, -0.5*dt**3*w_psd + dt*w_psd, 0, 0],
+                    [0, 0, 0, 0, -0.5*dt**3*w_psd + dt*w_psd, 0],
+                    [0, 0, 0, 0, 0, -0.5*dt**3*w_psd + dt*w_psd]
+                ]) + w_psd * np.eye(self.n)
 
     def predict(self, u):
         EKF.predict(self, u, self.Q, self.dt)
-
-    def get_Q(self, dt):
-        F_cont = np.array([[0, 0, 0, 1, 0, 0],
-                           [0, 0, 0, 0, 1, 0],
-                           [0, 0, 0, 0, 0, 1],
-                           [0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0]])
-        G = np.array([[0, 0, 0],
-                      [0, 0, 0],
-                      [0, 0, 0],
-                      [1, 0, 0],
-                      [0, 1, 0],
-                      [0, 0, 1]])
-        W = PROCESS_NOISE_VARIANCE * np.eye(3)
-
-        A = dt * np.concatenate([np.concatenate([-F_cont, np.dot(G, np.dot(W, G.T))], axis=1),
-                                 np.concatenate([np.zeros_like(F_cont), F_cont], axis=1)], axis=0)
-        B = np.eye(len(A)) + A + 0.5 * np.dot(A, A) # approx expm(A)
-
-        Q = np.dot(B[self.n:,self.n:].T, B[:self.n,self.n:])
-
-        return Q
 
     def f(self, x_k, u_k, dt):
         x_k_1 = x_k
